@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,8 +27,10 @@ class Settings(BaseSettings):
     app_name: str = "AI News"
     # Comma-separated list of allowed browser origins for CORS.
     cors_origins: str = "http://localhost:5173,http://localhost:4173"
-    # Create tables on startup. Handy for dev; disable in prod and run migrations.
-    auto_create_tables: bool = True
+    # Create tables on startup via create_all. Off by default — Alembic migrations
+    # own the schema now (the container runs `alembic upgrade head` on start).
+    # Opt in only for a quick throwaway dev spin-up.
+    auto_create_tables: bool = False
 
     # --- Database ---
     # Accepts a standard postgres URL (postgresql://...) or an async one
@@ -70,6 +74,13 @@ class Settings(BaseSettings):
     app_base_url: str = "http://localhost:5173"
     # Set True behind HTTPS so the session cookie is only sent over TLS.
     session_cookie_secure: bool = False
+    # Cookie SameSite. "lax" is correct for the same-origin (single-service)
+    # deploy; a split-origin deploy needs "none" (with session_cookie_secure=True).
+    # Validated so a bad value fails fast at startup, not with a per-request 500.
+    session_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    # Cookie lifetime (seconds) so the session survives a browser restart — the
+    # WorkOS sealed session is refreshable. Default 30 days.
+    session_cookie_max_age: int = 60 * 60 * 24 * 30
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -81,6 +92,16 @@ class Settings(BaseSettings):
         return bool(
             self.workos_api_key and self.workos_client_id and self.workos_cookie_password
         )
+
+    @model_validator(mode="after")
+    def _check_cookie_pairing(self) -> Settings:
+        # Browsers drop a SameSite=None cookie unless it's also Secure, so a
+        # None/insecure combo would silently break login — fail fast instead.
+        if self.session_cookie_samesite == "none" and not self.session_cookie_secure:
+            raise ValueError(
+                "session_cookie_samesite='none' requires session_cookie_secure=True"
+            )
+        return self
 
 
 @lru_cache

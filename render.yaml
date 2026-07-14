@@ -19,7 +19,27 @@ services:
         value: gpt-4.1-nano
       - key: GNEWS_API_KEY
         sync: false
-      - key: AUTO_CREATE_TABLES
+      # --- Auth (WorkOS AuthKit) ---
+      # Set all of these to enable real login/signup. Leave them unset to run in
+      # dev-mode (no login, single shared user).
+      - key: WORKOS_API_KEY
+        sync: false
+      - key: WORKOS_CLIENT_ID
+        sync: false
+      # Encrypts the session cookie; needs any >=32-char secret — Render generates one.
+      - key: WORKOS_COOKIE_PASSWORD
+        generateValue: true
+      # APP_BASE_URL and WORKOS_REDIRECT_URI must equal the live service URL, which
+      # you only know after the first deploy — set them in the dashboard then, and
+      # register the same callback in the WorkOS dashboard's redirect URIs.
+      #   APP_BASE_URL         = https://<your-url>.onrender.com
+      #   WORKOS_REDIRECT_URI  = https://<your-url>.onrender.com/api/auth/callback
+      - key: APP_BASE_URL
+        sync: false
+      - key: WORKOS_REDIRECT_URI
+        sync: false
+      # Required on HTTPS so the session cookie is actually sent to the browser.
+      - key: SESSION_COOKIE_SECURE
         value: "true"
 
 databases:

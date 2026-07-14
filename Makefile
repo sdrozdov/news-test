@@ -1,10 +1,11 @@
-.PHONY: help install backend frontend test lint db-up db-down
+.PHONY: help install backend frontend test lint db-up db-down migrate
 
 help:
 	@echo "Targets:"
 	@echo "  install    Install backend (venv) and frontend deps"
 	@echo "  db-up      Start local Postgres (docker compose)"
 	@echo "  db-down    Stop local Postgres"
+	@echo "  migrate    Apply DB migrations (alembic upgrade head)"
 	@echo "  backend    Run the API at http://localhost:8000"
 	@echo "  frontend   Run the web app at http://localhost:5173"
 	@echo "  test       Run backend tests"
@@ -20,6 +21,9 @@ db-up:
 
 db-down:
 	docker compose down
+
+migrate:
+	cd backend && ../.venv/bin/alembic upgrade head
 
 backend:
 	cd backend && ../.venv/bin/uvicorn app.main:app --reload --port 8000

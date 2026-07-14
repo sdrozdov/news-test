@@ -29,4 +29,6 @@ COPY --from=web /web/dist ./backend/static
 WORKDIR /app/backend
 
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Apply DB migrations, then serve. `alembic upgrade head` is a no-op when the DB
+# is already at the latest revision.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
