@@ -1,0 +1,20 @@
+[project]
+name = "news-ai-backend"
+version = "1.0.0"
+description = "Search news, analyze with AI (summary + sentiment), and store results."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: calling Depends()/Query() in argument defaults is the idiomatic FastAPI
+# pattern (recommended by the FastAPI docs), not a bug.
+ignore = ["B008"]
